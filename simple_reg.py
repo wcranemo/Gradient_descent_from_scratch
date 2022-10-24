@@ -4,7 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def base_func(input):
-    return((input ** 2) + input - 3) #quadratic
+    # return((input ** 2) + input - 3) #quadratic
+    return(5 * np.sin(input) + input - 2)
 
 def create_target(x_targ):
     """x_targ is numpy array"""
@@ -91,8 +92,6 @@ def gradient_descent(ws, bias, alpha, xn_normed, y_targ):
 
     return(new_ws, new_bias)
 
-# def create_scaled_xs(xvals, xn_rng, xn_avg, degree):
-#     for
 
 def eval_polynomial(xn_normed, weights, bias):
     """xn should be an array of the scaled x value at increasing powers of x
@@ -102,6 +101,18 @@ def eval_polynomial(xn_normed, weights, bias):
         total += xn_normed[i] * weights[i]
 
     return(total)
+
+def create_scaled_xs(x_vals, degree, xn_rng, xn_avg):
+    """creates an array of the corresponding scaled values of ascending powers of x"""
+    output = np.zeros((np.shape(x_vals)[0], degree))
+    for i in range(np.shape(x_vals)[0]):
+        for j in range(degree):
+            temp = x_vals[i] ** (j + 1)
+            temp -= xn_avg[j]
+            temp /= xn_rng[j]
+            output[i][j] = temp
+
+    return(output)
 
 def poly_reg(x_targ, y_targ, degree):
     # x1_norm, x1_n_rng, x1_n_avg = mean_normed(x_targ, 1)
@@ -121,18 +132,34 @@ def poly_reg(x_targ, y_targ, degree):
     weights = np.zeros(degree)
     bias = 0
 
-    alpha = .005
+    alpha = 1
 
-    num_iters = 7000
+    num_iters = 5000
     cost_hist = np.empty(num_iters)
+    weight_hist = np.zeros((num_iters, degree + 1))
+    # order in arr will be [b, w0, w1...]
+    weight_hist[0][0] = np.float64(bias)
+    # we are initializing weights at the origin
 
     for i in range(num_iters):
         cost_hist[i] = cost(weights, bias, xn_normed, y_targ)
         weights, bias = gradient_descent(weights, bias, alpha, xn_normed, y_targ)
 
-    predicted_vals = np.zeros(np.shape(x_targ))
+    print(cost_hist[num_iters - 1])
+
+    predicted_vals_og = np.zeros(np.shape(x_targ))
     for j in range(np.shape(x_targ)[0]):
-        predicted_vals[j] = eval_polynomial(xn_normed[:, j], weights, bias)
+        predicted_vals_og[j] = eval_polynomial(xn_normed[:, j], weights, bias)
+
+    xs_to_plot = np.linspace(-10, 10, num=100, dtype=np.float64)
+    scld_xs = create_scaled_xs(xs_to_plot, degree, xn_rng, xn_avg)
+    print(np.shape(scld_xs))
+    predicted_vals = np.zeros(np.shape(xs_to_plot))
+    print(np.shape(predicted_vals))
+    print(np.shape(xs_to_plot)[0])
+    for j in range(np.shape(xs_to_plot)[0]):
+        # print(j)
+        predicted_vals[j] = eval_polynomial(scld_xs[j], weights, bias)
 
 
     # print(weights, bias)
@@ -140,7 +167,8 @@ def poly_reg(x_targ, y_targ, degree):
     ax1.plot(np.arange(num_iters), cost_hist)
     ax1.set_title("Cost vs iters")
     ax2.scatter(x_targ, y_targ)
-    ax2.plot(x_targ, predicted_vals)
+    ax2.plot(x_targ, predicted_vals_og, 'k')
+    ax2.plot(xs_to_plot, predicted_vals, 'r')
     plt.show()
 
 
@@ -150,7 +178,7 @@ def main():
     # x1_norm, x1_n_rng, x1_n_avg = mean_normed(x_targ, 1)
     # x2_norm, x2_n_rng, x2_n_avg = mean_normed(x_targ, 2)
 
-    degree = 2
+    degree = 7
     poly_reg(x_targ, y_targ, degree)
 
     # print(x_targ)
